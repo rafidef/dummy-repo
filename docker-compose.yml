@@ -1,0 +1,11 @@
+services:
+  app:
+    # 'build: .' tells Docker Compose to build the image from the Dockerfile
+    # in the current directory, instead of pulling from a registry.
+    build: .
+    # We give the locally-built image a consistent name.
+    image: vps-versioned-app-local
+    restart: always
+    ports:
+      - "8080:8080"
+
