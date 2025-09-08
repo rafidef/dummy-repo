@@ -1,0 +1,46 @@
+name: Build and Deploy on VPS
+
+# This workflow runs only when you push a tag like v1.0.1, v1.2.0, etc.
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # This step securely connects to your VPS and runs the deployment script.
+      # It no longer builds an image here. It tells the VPS to do it.
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Navigate to your app directory on the VPS
+            cd /home/rafid/dummy-repo
+
+            # Pull the latest changes from the main branch of your repository
+            git pull origin main
+
+            # IMPORTANT: Ensure the new tag is fetched
+            git fetch --tags
+
+            # Check out the specific tag that triggered this workflow
+            # This ensures the version in package.json is correct for the build
+            git checkout ${{ github.ref_name }}
+
+            # Use Docker Compose to build the new image locally
+            docker compose build
+
+            # Stop the old container and start the new one with the freshly built image
+            docker compose up -d --force-recreate
+            
+            # Clean up old, unused images to save space
+            docker image prune -af
+
