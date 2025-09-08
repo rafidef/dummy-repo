@@ -35,12 +35,26 @@ jobs:
             # This ensures the version in package.json is correct for the build
             git checkout ${{ github.ref_name }}
 
-            # Use Docker Compose to build the new image locally
-            docker compose build
-
-            # Stop the old container and start the new one with the freshly built image
-            docker compose up -d --force-recreate
+            # Build and start the new container in the background
+            docker compose up -d --build --force-recreate
             
-            # Clean up old, unused images to save space
+            # --- SAFER DEPLOYMENT HEALTH CHECK ---
+            echo "Waiting for application to start..."
+            sleep 10 # Give the container a few seconds to initialize
+            
+            # Check if the application is responding correctly
+            # The --fail flag makes curl exit with an error if the HTTP request fails
+            if ! curl --fail http://localhost:8080; then
+              echo "Health check failed! Application might be down."
+              # Show the logs of the failed container for debugging
+              docker compose logs
+              # Exit with an error code to stop the workflow here
+              exit 1
+            fi
+            
+            echo "Health check passed! Deployment is successful."
+            # --- END OF HEALTH CHECK ---
+            
+            # This line will only run if the health check above succeeds
             docker image prune -af
 
