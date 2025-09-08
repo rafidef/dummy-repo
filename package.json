@@ -1,6 +1,6 @@
 {
   "name": "vps-versioned-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A dummy Node.js app to demonstrate versioning and deployment.",
   "main": "index.js",
   "scripts": {
